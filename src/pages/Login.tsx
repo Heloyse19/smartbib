@@ -64,7 +64,14 @@ const Login = () => {
             <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            Esqueceu a senha? <span className="text-primary font-semibold">Recuperar</span>
+            Não tem conta?{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/cadastro")}
+              className="text-primary font-semibold"
+            >
+              Cadastre-se
+            </button>
           </p>
         </form>
       </div>
