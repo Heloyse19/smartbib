@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import Salas from "./pages/Salas.tsx";
 import Reservar from "./pages/Reservar.tsx";
+import Reservas from "./pages/Reservas.tsx";
 import Cadastro from "./pages/Cadastro.tsx";
 import NotFound from "./pages/NotFound.tsx";
 

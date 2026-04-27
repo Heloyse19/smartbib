@@ -1,16 +1,24 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Users, MapPin, Calendar, Check } from "lucide-react";
+import { ArrowLeft, Users, MapPin, Calendar, Check, Presentation, Video, Briefcase, LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MobileFrame } from "@/components/MobileFrame";
 import { rooms, timeSlots } from "@/data/mockData";
 import { toast } from "sonner";
 
+const iconMap: Record<string, LucideIcon> = {
+  users: Users,
+  presentation: Presentation,
+  video: Video,
+  briefcase: Briefcase,
+};
+
 const Reservar = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const room = rooms.find((r) => r.id === id) ?? rooms[0];
+  const RoomIcon = iconMap[room.icon] ?? Users;
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
 
@@ -41,8 +49,8 @@ const Reservar = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-3xl bg-white/15 backdrop-blur flex items-center justify-center text-4xl">
-              {room.image}
+            <div className="w-20 h-20 rounded-3xl bg-white/15 backdrop-blur flex items-center justify-center">
+              <RoomIcon className="w-9 h-9 text-primary-foreground" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">{room.name}</h1>
