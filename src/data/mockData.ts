@@ -4,7 +4,7 @@ export type Room = {
   capacity: number;
   floor: string;
   features: string[];
-  image: string;
+  icon: "users" | "presentation" | "video" | "briefcase";
   available: boolean;
   hoursUntilFree: number; // 0 quando disponível
 };
@@ -19,6 +19,7 @@ export type Reservation = {
   roomName: string;
   date: string;
   time: string;
+  status: "confirmada" | "pendente";
 };
 
 export const rooms: Room[] = [
@@ -28,7 +29,7 @@ export const rooms: Room[] = [
     capacity: 6,
     floor: "1º andar",
     features: ["Projetor", "Quadro branco", "Wi-Fi"],
-    image: "🪑",
+    icon: "users",
     available: true,
     hoursUntilFree: 0,
   },
@@ -38,7 +39,7 @@ export const rooms: Room[] = [
     capacity: 10,
     floor: "2º andar",
     features: ["TV 55\"", "Videoconferência", "Wi-Fi"],
-    image: "💻",
+    icon: "video",
     available: false,
     hoursUntilFree: 2,
   },
@@ -48,7 +49,7 @@ export const rooms: Room[] = [
     capacity: 4,
     floor: "3º andar",
     features: ["Isolamento acústico", "Mesa redonda"],
-    image: "📚",
+    icon: "briefcase",
     available: true,
     hoursUntilFree: 0,
   },
@@ -58,29 +59,9 @@ export const rooms: Room[] = [
     capacity: 12,
     floor: "Térreo",
     features: ["Projetor 4K", "Microfone", "Som"],
-    image: "🎤",
+    icon: "presentation",
     available: false,
     hoursUntilFree: 1,
-  },
-  {
-    id: "5",
-    name: "Sala 5",
-    capacity: 8,
-    floor: "2º andar",
-    features: ["Quadro branco", "Wi-Fi"],
-    image: "✏️",
-    available: true,
-    hoursUntilFree: 0,
-  },
-  {
-    id: "6",
-    name: "Sala 6",
-    capacity: 5,
-    floor: "3º andar",
-    features: ["Wi-Fi", "Mesa redonda"],
-    image: "🧠",
-    available: false,
-    hoursUntilFree: 3,
   },
 ];
 
@@ -98,6 +79,7 @@ export const timeSlots: TimeSlot[] = [
 ];
 
 export const myReservations: Reservation[] = [
-  { id: "r1", roomName: "Sala 1", date: "Hoje", time: "10:00 - 11:00" },
-  { id: "r2", roomName: "Sala 3", date: "Amanhã", time: "14:00 - 15:00" },
+  { id: "r1", roomName: "Sala 1", date: "Hoje", time: "10:00 - 11:00", status: "confirmada" },
+  { id: "r2", roomName: "Sala 3", date: "Amanhã", time: "14:00 - 15:00", status: "confirmada" },
+  { id: "r3", roomName: "Sala 4", date: "28 abr", time: "16:00 - 17:00", status: "pendente" },
 ];
