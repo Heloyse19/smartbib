@@ -8,25 +8,40 @@ import {
   Platform,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { register } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function CadastroScreen() {
   const router = useRouter();
+  const { setAuth } = useAuth();
   const [email, setEmail] = useState("");
   const [matricula, setMatricula] = useState("");
   const [senha, setSenha] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleCadastro = () => {
+  const handleCadastro = async () => {
     if (!email.trim() || !matricula.trim() || !senha.trim()) {
       Alert.alert("Erro", "Preencha todos os campos.");
       return;
     }
-    Alert.alert("Conta criada!", "Bem-vindo ao SmartBib!", [
-      { text: "OK", onPress: () => router.push("/salas") },
-    ]);
+
+    setLoading(true);
+    try {
+      const data = await register(email.trim(), matricula.trim(), senha);
+      await setAuth(data.email, data.userId, data.token);
+      Alert.alert("Conta criada!", "Bem-vindo ao SmartBib!", [
+        { text: "OK", onPress: () => router.replace("/salas") },
+      ]);
+    } catch (err: any) {
+      Alert.alert("Erro", err.message || "Erro ao criar conta");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -41,6 +56,7 @@ export default function CadastroScreen() {
             <TouchableOpacity
               className="absolute top-4 left-4"
               onPress={() => router.back()}
+              disabled={loading}
             >
               <Ionicons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
@@ -67,6 +83,7 @@ export default function CadastroScreen() {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                editable={!loading}
               />
 
               <Text className="text-sm font-medium text-gray-700 mb-1">
@@ -78,6 +95,7 @@ export default function CadastroScreen() {
                 value={matricula}
                 onChangeText={setMatricula}
                 keyboardType="numeric"
+                editable={!loading}
               />
 
               <Text className="text-sm font-medium text-gray-700 mb-1">
@@ -89,15 +107,18 @@ export default function CadastroScreen() {
                 value={senha}
                 onChangeText={setSenha}
                 secureTextEntry
+                editable={!loading}
               />
 
               <TouchableOpacity
-                className="bg-primary-500 rounded-xl py-4 items-center"
+                className="bg-primary-500 rounded-xl py-4 items-center flex-row justify-center gap-2"
                 onPress={handleCadastro}
+                disabled={loading}
                 activeOpacity={0.8}
               >
+                {loading && <ActivityIndicator color="white" size="small" />}
                 <Text className="text-white text-lg font-semibold">
-                  Criar Conta
+                  {loading ? "Criando..." : "Criar Conta"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -105,6 +126,7 @@ export default function CadastroScreen() {
             <TouchableOpacity
               className="items-center mt-6"
               onPress={() => router.back()}
+              disabled={loading}
             >
               <Text className="text-primary-600 text-base">
                 Já tem conta? Entrar

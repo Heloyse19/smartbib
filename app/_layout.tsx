@@ -1,16 +1,11 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
-import { connectMQTT } from "@/services/mqtt";
+import { AuthProvider } from "@/contexts/AuthContext";
 import "./global.css";
 
 export default function RootLayout() {
-  useEffect(() => {
-    connectMQTT().catch(console.error);
-  }, []);
-
   return (
-    <>
+    <AuthProvider>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
@@ -18,6 +13,6 @@ export default function RootLayout() {
         <Stack.Screen name="reservar/[id]" />
         <Stack.Screen name="reservas" />
       </Stack>
-    </>
+    </AuthProvider>
   );
 }

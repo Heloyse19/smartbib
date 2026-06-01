@@ -8,22 +8,37 @@ import {
   Platform,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { login } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { setAuth } = useAuth();
   const [email, setEmail] = useState("aluno@faculdade.edu.br");
   const [senha, setSenha] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email.trim() || !senha.trim()) {
       Alert.alert("Erro", "Preencha todos os campos.");
       return;
     }
-    router.push("/salas");
+
+    setLoading(true);
+    try {
+      const data = await login(email.trim(), senha);
+      await setAuth(data.email, data.userId, data.token);
+      router.replace("/salas");
+    } catch (err: any) {
+      Alert.alert("Erro", err.message || "Erro ao fazer login");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,6 +78,7 @@ export default function LoginScreen() {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                editable={!loading}
               />
 
               <Text className="text-sm font-medium text-gray-700 mb-1">
@@ -74,20 +90,26 @@ export default function LoginScreen() {
                 value={senha}
                 onChangeText={setSenha}
                 secureTextEntry
+                editable={!loading}
               />
 
               <TouchableOpacity
-                className="bg-primary-500 rounded-xl py-4 items-center"
+                className="bg-primary-500 rounded-xl py-4 items-center flex-row justify-center gap-2"
                 onPress={handleLogin}
+                disabled={loading}
                 activeOpacity={0.8}
               >
-                <Text className="text-white text-lg font-semibold">Entrar</Text>
+                {loading && <ActivityIndicator color="white" size="small" />}
+                <Text className="text-white text-lg font-semibold">
+                  {loading ? "Entrando..." : "Entrar"}
+                </Text>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity
               className="items-center mt-6"
               onPress={() => router.push("/cadastro")}
+              disabled={loading}
             >
               <Text className="text-primary-600 text-base">
                 Não tem conta? Cadastre-se

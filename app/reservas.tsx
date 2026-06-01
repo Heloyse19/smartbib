@@ -1,17 +1,39 @@
-import { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
-import { useRouter } from "expo-router";
+import { useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import { useRouter, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { myReservations, Reservation } from "@/data/mockData";
-import { sendCommand } from "@/services/mqtt";
+import { getReservas, cancelReserva, type Reserva } from "@/services/api";
 
 export default function ReservasScreen() {
   const router = useRouter();
-  const [reservations, setReservations] =
-    useState<Reservation[]>(myReservations);
+  const [reservations, setReservations] = useState<Reserva[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleLiberar = (reservation: Reservation) => {
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        try {
+          setLoading(true);
+          const data = await getReservas();
+          setReservations(data);
+        } catch {
+          Alert.alert("Erro", "Não foi possível carregar suas reservas");
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, [])
+  );
+
+  const handleLiberar = (reservation: Reserva) => {
     Alert.alert(
       "Liberar Sala",
       `Deseja liberar a ${reservation.roomName} (${reservation.date}, ${reservation.time})?`,
@@ -20,17 +42,17 @@ export default function ReservasScreen() {
         {
           text: "Liberar",
           style: "destructive",
-          onPress: () => {
-            sendCommand("liberar");
-
-            setReservations((prev) =>
-              prev.filter((r) => r.id !== reservation.id)
-            );
-
-            Alert.alert(
-              "Sala Liberada!",
-              `${reservation.roomName} foi liberada. O LED verde será aceso na sala.`
-            );
+          onPress: async () => {
+            try {
+              await cancelReserva(reservation.id);
+              setReservations((prev) => prev.filter((r) => r.id !== reservation.id));
+              Alert.alert(
+                "Sala Liberada!",
+                `${reservation.roomName} foi liberada.`
+              );
+            } catch (err: any) {
+              Alert.alert("Erro", err.message || "Erro ao liberar sala");
+            }
           },
         },
       ]
@@ -39,7 +61,6 @@ export default function ReservasScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      {/* Header */}
       <View className="flex-row items-center px-5 pt-4 pb-3 border-b border-gray-100">
         <TouchableOpacity onPress={() => router.back()} className="mr-4">
           <Ionicons name="arrow-back" size={24} color="#111827" />
@@ -59,7 +80,12 @@ export default function ReservasScreen() {
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        {reservations.length === 0 ? (
+        {loading ? (
+          <View className="items-center mt-20">
+            <ActivityIndicator size="large" color="#0ea5e9" />
+            <Text className="text-gray-500 mt-3">Carregando reservas...</Text>
+          </View>
+        ) : reservations.length === 0 ? (
           <View className="items-center justify-center mt-24">
             <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
               <Ionicons name="calendar-outline" size={36} color="#d1d5db" />
@@ -96,6 +122,8 @@ export default function ReservasScreen() {
                     className={`px-3 py-1 rounded-full ${
                       reservation.status === "confirmada"
                         ? "bg-green-100"
+                        : reservation.status === "cancelada"
+                        ? "bg-red-100"
                         : "bg-amber-100"
                     }`}
                   >
@@ -103,29 +131,34 @@ export default function ReservasScreen() {
                       className={`text-xs font-medium ${
                         reservation.status === "confirmada"
                           ? "text-green-700"
+                          : reservation.status === "cancelada"
+                          ? "text-red-700"
                           : "text-amber-700"
                       }`}
                     >
                       {reservation.status === "confirmada"
                         ? "Confirmada"
+                        : reservation.status === "cancelada"
+                        ? "Cancelada"
                         : "Pendente"}
                     </Text>
                   </View>
                 </View>
 
-                {/* Liberar Button */}
-                <TouchableOpacity
-                  className="mt-3 bg-red-50 border border-red-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
-                  onPress={() => handleLiberar(reservation)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="lock-open" size={18} color="#ef4444" />
-                  <Text className="text-red-600 font-semibold text-base">
-                    Liberar Sala
-                  </Text>
-                </TouchableOpacity>
+                {reservation.status !== "cancelada" && (
+                  <TouchableOpacity
+                    className="mt-3 bg-red-50 border border-red-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
+                    onPress={() => handleLiberar(reservation)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="lock-open" size={18} color="#ef4444" />
+                    <Text className="text-red-600 font-semibold text-base">
+                      Liberar Sala
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 <Text className="text-gray-400 text-xs text-center mt-1">
-                  Envia comando 'liberar' via MQTT
+                  Reserva #{reservation.id}
                 </Text>
               </View>
             ))}
