@@ -1,4 +1,4 @@
-const API_BASE = "http://192.168.1.100:3000/api";
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000/api";
 
 let authToken: string | null = null;
 
