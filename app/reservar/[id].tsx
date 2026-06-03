@@ -10,7 +10,7 @@ import {
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { getSalas, createReserva, type Sala } from "@/services/api";
+import { getSalas, getRoomSlots, createReserva, type Sala, type RoomSlot } from "@/services/api";
 
 const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
   users: "people",
@@ -26,25 +26,13 @@ const iconColors: Record<string, string> = {
   briefcase: "#22c55e",
 };
 
-const ALL_SLOTS = [
-  "08:00 - 09:00",
-  "09:00 - 10:00",
-  "10:00 - 11:00",
-  "11:00 - 12:00",
-  "13:00 - 14:00",
-  "14:00 - 15:00",
-  "15:00 - 16:00",
-  "16:00 - 17:00",
-  "17:00 - 18:00",
-  "18:00 - 19:00",
-];
-
 export default function ReservarScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const salaId = Number(id);
 
   const [room, setRoom] = useState<Sala | null>(null);
+  const [slots, setSlots] = useState<RoomSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -54,11 +42,16 @@ export default function ReservarScreen() {
     useCallback(() => {
       (async () => {
         try {
-          const salas = await getSalas();
+          const today = new Date().toISOString().split("T")[0];
+          const [salas, roomSlots] = await Promise.all([
+            getSalas(),
+            getRoomSlots(salaId, today),
+          ]);
           const found = salas.find((s) => s.id === salaId);
           if (found) setRoom(found);
+          setSlots(roomSlots);
         } catch {
-          Alert.alert("Erro", "Não foi possível carregar a sala");
+          Alert.alert("Erro", "Não foi possível carregar os dados");
         } finally {
           setLoading(false);
         }
@@ -124,8 +117,6 @@ export default function ReservarScreen() {
     month: "long",
   });
 
-  const isAvailable = room.status === "livre";
-
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-row items-center px-5 pt-4 pb-3 border-b border-gray-100">
@@ -182,21 +173,21 @@ export default function ReservarScreen() {
         <Text className="text-sm text-gray-500 uppercase tracking-wider mb-3">
           Horários disponíveis
         </Text>
-        {!isAvailable && (
+        {slots.length > 0 && slots.every((s) => !s.available) && (
           <Text className="text-red-500 text-sm mb-3">
-            Esta sala não está disponível para reserva no momento.
+            Todos os horários estão reservados para hoje.
           </Text>
         )}
         <View className="flex-row flex-wrap gap-3 mb-6">
-          {ALL_SLOTS.map((slot) => (
+          {slots.map((slot) => (
             <TouchableOpacity
-              key={slot}
-              disabled={!isAvailable || confirmed || saving}
-              onPress={() => setSelectedSlot(slot)}
+              key={slot.label}
+              disabled={!slot.available || confirmed || saving}
+              onPress={() => setSelectedSlot(slot.label)}
               className={`px-4 py-3 rounded-xl border ${
-                !isAvailable
+                !slot.available
                   ? "bg-gray-100 border-gray-200 opacity-50"
-                  : selectedSlot === slot
+                  : selectedSlot === slot.label
                   ? "bg-primary-500 border-primary-500"
                   : "bg-white border-gray-300"
               }`}
@@ -204,14 +195,14 @@ export default function ReservarScreen() {
             >
               <Text
                 className={`text-sm font-medium ${
-                  !isAvailable
+                  !slot.available
                     ? "text-gray-400 line-through"
-                    : selectedSlot === slot
+                    : selectedSlot === slot.label
                     ? "text-white"
                     : "text-gray-700"
                 }`}
               >
-                {slot}
+                {slot.label}
               </Text>
             </TouchableOpacity>
           ))}
@@ -220,9 +211,9 @@ export default function ReservarScreen() {
         <TouchableOpacity
           className={`rounded-2xl py-4 items-center mb-8 ${
             confirmed ? "bg-green-500" : "bg-primary-500"
-          } ${(!selectedSlot || !isAvailable) && !confirmed ? "opacity-60" : ""}`}
+          } ${!selectedSlot && !confirmed ? "opacity-60" : ""}`}
           onPress={handleConfirm}
-          disabled={confirmed || !selectedSlot || !isAvailable || saving}
+          disabled={confirmed || !selectedSlot || saving}
           activeOpacity={0.8}
         >
           <View className="flex-row items-center gap-2">

@@ -77,6 +77,17 @@ export async function getSalas(): Promise<Sala[]> {
   return request("/salas");
 }
 
+export interface RoomSlot {
+  inicio: string;
+  fim: string;
+  label: string;
+  available: boolean;
+}
+
+export async function getRoomSlots(salaId: number, data: string): Promise<RoomSlot[]> {
+  return request(`/salas/${salaId}/slots?data=${encodeURIComponent(data)}`);
+}
+
 export async function createReserva(
   salaId: number,
   data: string,
