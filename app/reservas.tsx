@@ -11,14 +11,26 @@ import {
 import { useRouter, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { getReservas, cancelReserva, type Reserva } from "@/services/api";
+import { getReservas, cancelReserva, ocuparReserva, type Reserva } from "@/services/api";
+
+function isWithinTimeSlot(reservation: Reserva): boolean {
+  const now = new Date();
+  const [y, m, d] = reservation.date.split("-").map(Number);
+  const [startH, startM] = reservation.horaInicio.split(":").map(Number);
+  const [endH, endM] = reservation.horaFim.split(":").map(Number);
+  const inicio = new Date(y, m - 1, d, startH, startM, 0, 0);
+  const fim = new Date(y, m - 1, d, endH, endM, 0, 0);
+  return now >= inicio && now <= fim;
+}
 
 export default function ReservasScreen() {
   const router = useRouter();
   const [reservations, setReservations] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(true);
-  const [confirming, setConfirming] = useState<Reserva | null>(null);
+  const [confirmingLiberar, setConfirmingLiberar] = useState<Reserva | null>(null);
+  const [confirmingOcupar, setConfirmingOcupar] = useState<Reserva | null>(null);
   const [liberando, setLiberando] = useState(false);
+  const [ocupando, setOcupando] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -40,16 +52,31 @@ export default function ReservasScreen() {
     setLiberando(true);
     try {
       await cancelReserva(reservation.id);
-      setReservations((prev) => prev.filter((r) => r.id !== reservation.id));
-      Alert.alert(
-        "Sala Liberada!",
-        `${reservation.roomName} foi liberada.`
+      setReservations((prev) =>
+        prev.map((r) => (r.id === reservation.id ? { ...r, status: "cancelada" } : r))
       );
+      Alert.alert("Sala Liberada!", `${reservation.roomName} foi liberada.`);
     } catch (err: any) {
       Alert.alert("Erro", err.message || "Erro ao liberar sala");
     } finally {
       setLiberando(false);
-      setConfirming(null);
+      setConfirmingLiberar(null);
+    }
+  };
+
+  const doConfirmar = async (reservation: Reserva) => {
+    setOcupando(true);
+    try {
+      await ocuparReserva(reservation.id);
+      setReservations((prev) =>
+        prev.map((r) => (r.id === reservation.id ? { ...r, status: "confirmada" } : r))
+      );
+      Alert.alert("Reserva Confirmada!", `${reservation.roomName} foi confirmada.`);
+    } catch (err: any) {
+      Alert.alert("Erro", err.message || "Erro ao confirmar reserva");
+    } finally {
+      setOcupando(false);
+      setConfirmingOcupar(null);
     }
   };
 
@@ -140,16 +167,38 @@ export default function ReservasScreen() {
                 </View>
 
                 {reservation.status !== "cancelada" && (
-                  <TouchableOpacity
-                    className="mt-3 bg-red-50 border border-red-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
-                    onPress={() => setConfirming(reservation)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="lock-open" size={18} color="#ef4444" />
-                    <Text className="text-red-600 font-semibold text-base">
-                      Liberar Sala
-                    </Text>
-                  </TouchableOpacity>
+                  <View className="flex-row gap-3 mt-3">
+                    {reservation.status === "pendente" && isWithinTimeSlot(reservation) && (
+                      <TouchableOpacity
+                        className="flex-1 bg-green-50 border border-green-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
+                        onPress={() => setConfirmingOcupar(reservation)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
+                        <Text className="text-green-600 font-semibold text-sm">
+                          Confirmar
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                    {reservation.status === "pendente" && !isWithinTimeSlot(reservation) && (
+                      <View className="flex-1 bg-gray-50 border border-gray-200 rounded-xl py-3 items-center flex-row justify-center gap-2">
+                        <Ionicons name="time" size={16} color="#9ca3af" />
+                        <Text className="text-gray-400 font-medium text-xs">
+                          Confirme durante o horário reservado
+                        </Text>
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      className="flex-1 bg-red-50 border border-red-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
+                      onPress={() => setConfirmingLiberar(reservation)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="lock-open" size={18} color="#ef4444" />
+                      <Text className="text-red-600 font-semibold text-sm">
+                        Liberar
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
                 <Text className="text-gray-400 text-xs text-center mt-1">
                   Reserva #{reservation.id}
@@ -161,10 +210,10 @@ export default function ReservasScreen() {
       </ScrollView>
 
       <Modal
-        visible={confirming !== null}
+        visible={confirmingLiberar !== null}
         transparent
         animationType="fade"
-        onRequestClose={() => !liberando && setConfirming(null)}
+        onRequestClose={() => !liberando && setConfirmingLiberar(null)}
       >
         <View className="flex-1 bg-black/50 justify-center items-center px-6">
           <View className="bg-white rounded-2xl p-6 w-full max-w-sm">
@@ -175,20 +224,20 @@ export default function ReservasScreen() {
               Liberar Sala
             </Text>
             <Text className="text-sm text-gray-500 text-center mb-6">
-              Deseja liberar a {confirming?.roomName} ({confirming?.date},{" "}
-              {confirming?.time})?
+              Deseja liberar a {confirmingLiberar?.roomName} ({confirmingLiberar?.date},{" "}
+              {confirmingLiberar?.time})?
             </Text>
             <View className="flex-row gap-3">
               <TouchableOpacity
                 className="flex-1 border border-gray-300 rounded-xl py-3 items-center"
-                onPress={() => setConfirming(null)}
+                onPress={() => setConfirmingLiberar(null)}
                 disabled={liberando}
               >
                 <Text className="text-gray-700 font-semibold">Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className="flex-1 bg-red-500 rounded-xl py-3 items-center flex-row justify-center gap-2"
-                onPress={() => confirming && doLiberar(confirming)}
+                onPress={() => confirmingLiberar && doLiberar(confirmingLiberar)}
                 disabled={liberando}
               >
                 {liberando ? (
@@ -196,6 +245,49 @@ export default function ReservasScreen() {
                 ) : null}
                 <Text className="text-white font-semibold">
                   {liberando ? "Liberando..." : "Liberar"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={confirmingOcupar !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !ocupando && setConfirmingOcupar(null)}
+      >
+        <View className="flex-1 bg-black/50 justify-center items-center px-6">
+          <View className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mb-4 mx-auto">
+              <Ionicons name="checkmark-circle" size={24} color="#22c55e" />
+            </View>
+            <Text className="text-lg font-bold text-gray-900 text-center mb-2">
+              Confirmar Reserva
+            </Text>
+            <Text className="text-sm text-gray-500 text-center mb-6">
+              Deseja confirmar a {confirmingOcupar?.roomName} ({confirmingOcupar?.date},{" "}
+              {confirmingOcupar?.time})?
+            </Text>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                className="flex-1 border border-gray-300 rounded-xl py-3 items-center"
+                onPress={() => setConfirmingOcupar(null)}
+                disabled={ocupando}
+              >
+                <Text className="text-gray-700 font-semibold">Nao</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1 bg-green-500 rounded-xl py-3 items-center flex-row justify-center gap-2"
+                onPress={() => confirmingOcupar && doConfirmar(confirmingOcupar)}
+                disabled={ocupando}
+              >
+                {ocupando ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : null}
+                <Text className="text-white font-semibold">
+                  {ocupando ? "Confirmando..." : "Sim, confirmar"}
                 </Text>
               </TouchableOpacity>
             </View>
