@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { getToken, setToken as setApiToken } from "@/services/api";
+// contexts/AuthContext.tsx
+import { createContext, useContext, useState, ReactNode } from "react";
+import { setToken as setApiToken } from "@/services/api";
 
 interface AuthState {
   email: string | null;
@@ -17,9 +18,10 @@ const AuthContext = createContext<AuthContextType>({
   auth: { email: null, userId: null },
   setAuth: async () => {},
   clearAuth: () => {},
-  loading: true,
+  loading: false,
 });
 
+// cachedAuth mantido para compatibilidade
 let cachedAuth: AuthState = { email: null, userId: null };
 
 export function useAuth() {
@@ -34,16 +36,8 @@ interface Props {
 
 export function AuthProvider({ children }: Props) {
   const [auth, setAuthState] = useState<AuthState>({ email: null, userId: null });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = getToken();
-    if (token) {
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, []);
+  // loading sempre false porque não há carregamento persistente
+  const loading = false;
 
   const setAuth = async (email: string, userId: number, token: string) => {
     setApiToken(token);

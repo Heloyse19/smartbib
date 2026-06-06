@@ -35,7 +35,6 @@ export default function ReservarScreen() {
   const [slots, setSlots] = useState<RoomSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [confirmed, setConfirmed] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useFocusEffect(
@@ -64,23 +63,25 @@ export default function ReservarScreen() {
 
     setSaving(true);
     try {
-      const [horaInicio] = selectedSlot.split(" - ");
-      const horaFim = selectedSlot.split(" - ")[1];
+      const [horaInicio, horaFim] = selectedSlot.split(" - ");
       const today = new Date().toISOString().split("T")[0];
 
       await createReserva(salaId, today, horaInicio, horaFim);
 
-      setConfirmed(true);
+      // Após reservar, marcar o slot como indisponível localmente
+      setSlots(prev =>
+        prev.map(slot =>
+          slot.label === selectedSlot ? { ...slot, available: false } : slot
+        )
+      );
+
+      // Limpar a seleção para evitar reenvio acidental
+      setSelectedSlot(null);
 
       Alert.alert(
         "Reserva Confirmada!",
         `${room.nome} reservada para ${selectedSlot}.`,
-        [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ]
+        [{ text: "OK", onPress: () => router.back() }]
       );
     } catch (err: any) {
       Alert.alert("Erro", err.message || "Erro ao confirmar reserva");
@@ -182,7 +183,7 @@ export default function ReservarScreen() {
           {slots.map((slot) => (
             <TouchableOpacity
               key={slot.label}
-              disabled={!slot.available || confirmed || saving}
+              disabled={!slot.available || saving}
               onPress={() => setSelectedSlot(slot.label)}
               className={`px-4 py-3 rounded-xl border ${
                 !slot.available
@@ -210,27 +211,23 @@ export default function ReservarScreen() {
 
         <TouchableOpacity
           className={`rounded-2xl py-4 items-center mb-8 ${
-            confirmed ? "bg-green-500" : "bg-primary-500"
-          } ${!selectedSlot && !confirmed ? "opacity-60" : ""}`}
+            selectedSlot ? "bg-primary-500" : "bg-gray-300"
+          }`}
           onPress={handleConfirm}
-          disabled={confirmed || !selectedSlot || saving}
+          disabled={!selectedSlot || saving}
           activeOpacity={0.8}
         >
           <View className="flex-row items-center gap-2">
             {saving ? (
               <ActivityIndicator color="white" size="small" />
             ) : (
-              <Ionicons
-                name={confirmed ? "checkmark-circle" : "lock-closed"}
-                size={20}
-                color="white"
-              />
+              <Ionicons name="lock-closed" size={20} color="white" />
             )}
             <Text className="text-white text-lg font-semibold">
-              {saving ? "Reservando..." : confirmed ? "Reserva Confirmada" : "Confirmar Reserva"}
+              {saving ? "Reservando..." : "Confirmar Reserva"}
             </Text>
           </View>
-          {!confirmed && !saving && (
+          {!saving && (
             <Text className="text-white/70 text-xs mt-1">
               Envia reserva para o servidor
             </Text>

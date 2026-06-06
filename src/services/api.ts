@@ -18,6 +18,7 @@ async function request(path: string, options: RequestInit = {}): Promise<any> {
 
   if (authToken) {
     headers["Authorization"] = `Bearer ${authToken}`;
+    console.log('[API] Token sendo enviado:', authToken.substring(0, 20) + '...');
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
@@ -28,8 +29,10 @@ async function request(path: string, options: RequestInit = {}): Promise<any> {
   const data = await res.json();
 
   if (!res.ok) {
+    console.error(`[API] Erro ${res.status} em ${path}:`, data);
     throw new Error(data.error || `Erro ${res.status}`);
   }
+  console.log(`[API] Sucesso ${path}:`, data);
 
   return data;
 }
@@ -110,6 +113,16 @@ export async function cancelReserva(id: number) {
 
 export async function ocuparReserva(id: number) {
   return request(`/reservas/${id}/ocupar`, { method: "POST" });
+}
+
+// Excluir uma reserva permanentemente (histórico)
+export async function deletarReservaPermanentemente(id: number) {
+  return request(`/reservas/${id}/permanent`, { method: "DELETE" });
+}
+
+// Limpar todo o histórico (remove todas as reservas finalizadas)
+export async function limparHistorico() {
+  return request("/reservas/historico/limpar", { method: "DELETE" });
 }
 
 export function logout() {

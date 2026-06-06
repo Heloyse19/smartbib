@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+// app/salas.tsx
+import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,6 +8,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -28,18 +30,6 @@ const iconColors: Record<string, string> = {
   briefcase: "#22c55e",
 };
 
-const statusLabel: Record<string, string> = {
-  livre: "Disponível",
-  reservada: "Reservada",
-  ocupada: "Ocupada",
-};
-
-const statusColor: Record<string, { bg: string; text: string }> = {
-  livre: { bg: "bg-green-100", text: "text-green-700" },
-  reservada: { bg: "bg-amber-100", text: "text-amber-700" },
-  ocupada: { bg: "bg-red-100", text: "text-red-700" },
-};
-
 export default function SalasScreen() {
   const router = useRouter();
   const { auth, clearAuth } = useAuth();
@@ -47,21 +37,31 @@ export default function SalasScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [salas, setSalas] = useState<Sala[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchSalas = async () => {
     try {
-      setLoading(true);
       const data = await getSalas();
       setSalas(data);
     } catch {
       Alert.alert("Erro", "Não foi possível carregar as salas");
-    } finally {
-      setLoading(false);
     }
   };
 
+  const loadData = async () => {
+    setLoading(true);
+    await fetchSalas();
+    setLoading(false);
+  };
+
   useEffect(() => {
-    fetchSalas();
+    loadData();
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchSalas();
+    setRefreshing(false);
   }, []);
 
   const filtered = salas.filter((r) =>
@@ -139,6 +139,14 @@ export default function SalasScreen() {
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#0ea5e9"]}
+            tintColor="#0ea5e9"
+          />
+        }
       >
         {loading ? (
           <View className="items-center mt-20">
@@ -177,21 +185,7 @@ export default function SalasScreen() {
                   </Text>
                 </View>
                 <View className="items-end">
-                  <View
-                    className={`px-3 py-1 rounded-full ${statusColor[sala.status]?.bg || "bg-gray-100"}`}
-                  >
-                    <Text
-                      className={`text-xs font-medium ${statusColor[sala.status]?.text || "text-gray-700"}`}
-                    >
-                      {statusLabel[sala.status] || sala.status}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color="#d1d5db"
-                    style={{ marginTop: 8 }}
-                  />
+                  <Ionicons name="chevron-forward" size={18} color="#d1d5db" />
                 </View>
               </TouchableOpacity>
             ))}
