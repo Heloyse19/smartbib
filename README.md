@@ -1,30 +1,67 @@
-# SmartBib
+# SmartBib - Mobile (Expo/React Native)
 
-Este repositório contém o **protótipo funcional** da aplicação SmartBib. O objetivo deste projeto é validar a interface, o fluxo de navegação e a experiência do usuário (UX) para uma solução de agendamento de salas de reunião da faculdade SENAC, focada em dispositivos Android.
+Aplicativo mobile para reservas de salas da biblioteca SENAC.
 
-> **Nota:** Este é um protótipo de alta fidelidade desenvolvido em React para simular o comportamento final do aplicativo em ambiente móvel.
+## Pré-requisitos
 
-## Objetivo do Protótipo
-O SmartBib foi idealizado para resolver o problema de gestão de espaços acadêmicos, permitindo que estudantes e professores visualizem e reservem salas diretamente de seus smartphones.
+- **Node.js** 18+
+- **npm** 9+
+- **Expo CLI** (`npm install -g expo-cli`)
+- **Emulador Android** (Android Studio) ou dispositivo físico com Expo Go
 
-## Tecnologias de Prototipagem
-Para garantir rapidez e fidelidade visual, utilizamos:
-- **React + TypeScript**: Para simular a lógica de navegação.
-- **Tailwind CSS**: Para garantir que a interface siga padrões modernos de design mobile.
-- **Shadcn/ui**: Componentes de interface otimizados para toque.
-- **Lucide React**: Ícones intuitivos para navegação mobile.
+## Instalação
 
-## Funcionalidades Prototipadas
-- **Fluxo de Reserva**: Navegação entre a listagem de salas e o formulário de reserva.
-- **Interface Mobile-First**: Design totalmente adaptado para telas de celulares.
-- **Simulação de Dados**: Uso do TanStack Query para simular o carregamento de informações em tempo real.
+```bash
+cd smartbib
+npm install
+```
 
-## Como Visualizar o Protótipo
-Para rodar a simulação no seu ambiente local:
+## Configuração
 
-1. Instale as dependências: `npm install`
-2. Inicie o ambiente: `npm run dev`
-3. No navegador, pressione `F12` e selecione a visualização de **dispositivo móvel** (ícone de celular) para uma experiência fiel ao objetivo do projeto.
+Copie o arquivo de exemplo e ajuste a URL da API:
 
----
-**Contexto Acadêmico:** Este protótipo serve como base para o desenvolvimento da aplicação nativa, permitindo testes de usabilidade antes da implementação final.
+```bash
+cp .env.example .env
+```
+
+Variável `EXPO_PUBLIC_API_URL`:
+
+| Ambiente | Valor |
+|----------|-------|
+| Emulador Android | `http://10.0.2.2:3000/api` |
+| Emulador iOS | `http://localhost:3000/api` |
+| Dispositivo físico | `http://<IP-da-máquina>:3000/api` |
+
+## Rodando
+
+### Desenvolvimento
+
+```bash
+npm start
+```
+
+Isso abre o Expo Dev Tools. Escolha uma opção:
+
+- Pressione `a` — abrir no emulador Android
+- Pressione `i` — abrir no emulador iOS
+- Escaneie o QR code — abrir no dispositivo físico com Expo Go
+
+### Web (para debug no navegador)
+
+```bash
+npm run web
+```
+
+## Telas
+
+| Rota | Descrição |
+|------|-----------|
+| `/` | Login |
+| `/cadastro` | Registro de usuário |
+| `/salas` | Listagem de salas |
+| `/reservar/[id]` | Reservar horário em uma sala |
+| `/reservas` | Gerenciar reservas (confirmar, liberar) |
+
+## Backend
+
+O app requer o backend rodando. Consulte `../backend/README.md` para instruções.
