@@ -40,7 +40,6 @@ export default function ReservasScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"ativas" | "historico">("ativas");
 
-  // Estados para modais
   const [confirmingLiberar, setConfirmingLiberar] = useState<Reserva | null>(null);
   const [confirmingOcupar, setConfirmingOcupar] = useState<Reserva | null>(null);
   const [confirmingExcluirHistorico, setConfirmingExcluirHistorico] = useState<Reserva | null>(null);
@@ -177,6 +176,7 @@ export default function ReservasScreen() {
         </View>
       </View>
 
+      {/* Botões e mensagens para reservas ativas (não canceladas e não histórico) */}
       {!isHistorico && reservation.status !== "cancelada" && (
         <View className="flex-row gap-3 mt-3">
           {reservation.status === "pendente" && isWithinTimeSlot(reservation) && (
@@ -194,34 +194,32 @@ export default function ReservasScreen() {
                   Você está dentro do horário. Confirme agora!
                 </Text>
               </View>
-              <TouchableOpacity
-                className="flex-1 bg-red-50 border border-red-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
-                onPress={() => setConfirmingLiberar(reservation)}
-              >
-                <Ionicons name="lock-open" size={18} color="#ef4444" />
-                <Text className="text-red-600 font-semibold text-sm">Liberar</Text>
-              </TouchableOpacity>
             </>
           )}
           {reservation.status === "pendente" && !isWithinTimeSlot(reservation) && (
-            <>
-              <View className="flex-1 bg-blue-50 border border-blue-200 rounded-xl py-3 items-center flex-row justify-center gap-2">
-                <Ionicons name="information-circle" size={16} color="#0ea5e9" />
-                <Text className="text-blue-600 font-medium text-xs">
-                  Você tem 5 minutos para confirmar quando o horário começar
-                </Text>
-              </View>
-              <TouchableOpacity
-                className="flex-1 bg-red-50 border border-red-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
-                onPress={() => setConfirmingLiberar(reservation)}
-              >
-                <Ionicons name="lock-open" size={18} color="#ef4444" />
-                <Text className="text-red-600 font-semibold text-sm">Liberar</Text>
-              </TouchableOpacity>
-            </>
+            <View className="flex-1 bg-blue-50 border border-blue-200 rounded-xl py-3 items-center flex-row justify-center gap-2">
+              <Ionicons name="information-circle" size={16} color="#0ea5e9" />
+              <Text className="text-blue-600 font-medium text-xs">
+                Você tem 5 minutos para confirmar quando o horário começar
+              </Text>
+            </View>
           )}
+          {reservation.status === "confirmada" && (
+            <View className="flex-1 bg-green-50 border border-green-200 rounded-xl py-3 items-center flex-row justify-center gap-2">
+              <Ionicons name="checkmark-circle" size={16} color="#22c55e" />
+              <Text className="text-green-600 font-medium text-xs">Sala ocupada</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            className="flex-1 bg-red-50 border border-red-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
+            onPress={() => setConfirmingLiberar(reservation)}
+          >
+            <Ionicons name="lock-open" size={18} color="#ef4444" />
+            <Text className="text-red-600 font-semibold text-sm">Liberar</Text>
+          </TouchableOpacity>
         </View>
       )}
+
       <Text className="text-gray-400 text-xs text-center mt-1">Reserva #{reservation.id}</Text>
     </View>
   );
@@ -238,7 +236,6 @@ export default function ReservasScreen() {
         </View>
       </View>
 
-      {/* Abas */}
       <View className="flex-row border-b border-gray-200 px-5 justify-between items-center">
         <View className="flex-row flex-1">
           <TouchableOpacity
@@ -298,7 +295,7 @@ export default function ReservasScreen() {
         )}
       </ScrollView>
 
-      {/* Modal Confirmar Liberação */}
+      {/* Modais (mantidos iguais) */}
       <Modal
         visible={confirmingLiberar !== null}
         transparent
@@ -335,7 +332,6 @@ export default function ReservasScreen() {
         </View>
       </Modal>
 
-      {/* Modal Confirmar Ocupação */}
       <Modal
         visible={confirmingOcupar !== null}
         transparent
@@ -372,7 +368,6 @@ export default function ReservasScreen() {
         </View>
       </Modal>
 
-      {/* Modal Confirmar Exclusão de uma reserva do histórico */}
       <Modal
         visible={confirmingExcluirHistorico !== null}
         transparent
@@ -410,7 +405,6 @@ export default function ReservasScreen() {
         </View>
       </Modal>
 
-      {/* Modal Confirmar Limpar TODO o histórico */}
       <Modal
         visible={confirmingLimparHistorico}
         transparent
