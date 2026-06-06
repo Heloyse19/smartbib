@@ -180,27 +180,46 @@ export default function ReservasScreen() {
       {!isHistorico && reservation.status !== "cancelada" && (
         <View className="flex-row gap-3 mt-3">
           {reservation.status === "pendente" && isWithinTimeSlot(reservation) && (
-            <TouchableOpacity
-              className="flex-1 bg-green-50 border border-green-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
-              onPress={() => setConfirmingOcupar(reservation)}
-            >
-              <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
-              <Text className="text-green-600 font-semibold text-sm">Confirmar</Text>
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity
+                className="flex-1 bg-green-50 border border-green-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
+                onPress={() => setConfirmingOcupar(reservation)}
+              >
+                <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
+                <Text className="text-green-600 font-semibold text-sm">Confirmar</Text>
+              </TouchableOpacity>
+              <View className="flex-1 bg-blue-50 border border-blue-200 rounded-xl py-3 items-center flex-row justify-center gap-2">
+                <Ionicons name="information-circle" size={16} color="#0ea5e9" />
+                <Text className="text-blue-600 font-medium text-xs">
+                  Você está dentro do horário. Confirme agora!
+                </Text>
+              </View>
+              <TouchableOpacity
+                className="flex-1 bg-red-50 border border-red-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
+                onPress={() => setConfirmingLiberar(reservation)}
+              >
+                <Ionicons name="lock-open" size={18} color="#ef4444" />
+                <Text className="text-red-600 font-semibold text-sm">Liberar</Text>
+              </TouchableOpacity>
+            </>
           )}
           {reservation.status === "pendente" && !isWithinTimeSlot(reservation) && (
-            <View className="flex-1 bg-gray-50 border border-gray-200 rounded-xl py-3 items-center flex-row justify-center gap-2">
-              <Ionicons name="time" size={16} color="#9ca3af" />
-              <Text className="text-gray-400 font-medium text-xs">Confirme no horário</Text>
-            </View>
+            <>
+              <View className="flex-1 bg-blue-50 border border-blue-200 rounded-xl py-3 items-center flex-row justify-center gap-2">
+                <Ionicons name="information-circle" size={16} color="#0ea5e9" />
+                <Text className="text-blue-600 font-medium text-xs">
+                  Você tem 5 minutos para confirmar quando o horário começar
+                </Text>
+              </View>
+              <TouchableOpacity
+                className="flex-1 bg-red-50 border border-red-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
+                onPress={() => setConfirmingLiberar(reservation)}
+              >
+                <Ionicons name="lock-open" size={18} color="#ef4444" />
+                <Text className="text-red-600 font-semibold text-sm">Liberar</Text>
+              </TouchableOpacity>
+            </>
           )}
-          <TouchableOpacity
-            className="flex-1 bg-red-50 border border-red-200 rounded-xl py-3 items-center flex-row justify-center gap-2"
-            onPress={() => setConfirmingLiberar(reservation)}
-          >
-            <Ionicons name="lock-open" size={18} color="#ef4444" />
-            <Text className="text-red-600 font-semibold text-sm">Liberar</Text>
-          </TouchableOpacity>
         </View>
       )}
       <Text className="text-gray-400 text-xs text-center mt-1">Reserva #{reservation.id}</Text>
