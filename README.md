@@ -44,7 +44,7 @@ Variavel `EXPO_PUBLIC_API_URL`:
 ### Desenvolvimento
 
 ```bash
-npm start
+npx expo start 
 ```
 
 Isso abre o Expo Dev Tools. Escolha uma opcao:
@@ -53,11 +53,6 @@ Isso abre o Expo Dev Tools. Escolha uma opcao:
 - Pressione `i` -- abrir no emulador iOS
 - Escaneie o QR code -- abrir no dispositivo fisico com Expo Go
 
-### Web (para debug no navegador)
-
-```bash
-npm run web
-```
 
 ## Telas
 
