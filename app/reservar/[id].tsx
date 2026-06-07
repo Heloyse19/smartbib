@@ -41,7 +41,8 @@ export default function ReservarScreen() {
     useCallback(() => {
       (async () => {
         try {
-          const today = new Date().toISOString().split("T")[0];
+          const d = new Date();
+          const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
           const [salas, roomSlots] = await Promise.all([
             getSalas(),
             getRoomSlots(salaId, today),
@@ -64,7 +65,8 @@ export default function ReservarScreen() {
     setSaving(true);
     try {
       const [horaInicio, horaFim] = selectedSlot.split(" - ");
-      const today = new Date().toISOString().split("T")[0];
+      const d = new Date();
+      const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
       await createReserva(salaId, today, horaInicio, horaFim);
 
